@@ -1,0 +1,319 @@
+-------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\Percy\OneDrive - Dickinson College\Academic\Soph\ECON298\Burste
+> in-Howe-Pham-298-Replication\Analysis\Analysis.log
+  log type:  text
+ opened on:  30 Apr 2020, 23:09:23
+
+. use Data\Lead_Mortality                 // use the original data file
+
+. 
+. codebook, compact               // summary of the data
+
+Variable      Obs Unique      Mean       Min       Max  Label
+-------------------------------------------------------------------------------------
+year          172      1      1900      1900      1900  (mean) year
+city          172    165         .         .         .  
+state         172     36         .         .         .  
+age           172    170   27.7047   22.0125   34.4439  (mean) age
+hardness      172     59   113.436         2       445  
+ph            172     25  7.322674       5.7       8.9  
+infrate       172    172   .396194  .1097561  .8444657  
+typhoid_rate  172    168  .0410789         0  .1442786  
+np_tub_rate   172    159  .0204759         0  .0574163  
+mom_rate      172    166  .1989602  .1308901   .323741  
+population    172    158  1087.962        85  34355.54  
+precipitat~n  172     35  3.328629  .9546053  4.754057  
+temperature   172     35  49.32409  40.81126  70.62281  
+lead          172      2  .6802326         0         1  
+foreign_sh~e  172    172  .2169771         0  .5822222  
+-------------------------------------------------------------------------------------
+
+. 
+. gen lnph = ln(ph-5.675) // generate ln(pH-5.675)
+
+. gen lnhardness = ln(hardness)           // generate ln(hardness)
+
+. 
+. // The graph
+. twoway (scatter lnph infrate) (lfit lnph infrate)
+
+. graph save Analysis/Figure1, replace 
+(file Analysis/Figure1.gph saved)
+
+. 
+. // TABLE 3 - determinants of a city’s use of lead-only pipes
+. // column 1 - lead only 
+. regress lead lnph lnhardness population precipitation temperature typhoid_rate, rob
+> ust
+
+Linear regression                               Number of obs     =        172
+                                                F(6, 165)         =       5.88
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.1191
+                                                Root MSE          =     .44691
+
+-------------------------------------------------------------------------------
+              |               Robust
+         lead |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+         lnph |  -.1323242   .0589017    -2.25   0.026    -.2486224    -.016026
+   lnhardness |   .1470676   .0404859     3.63   0.000     .0671303    .2270048
+   population |   .0000185   6.46e-06     2.86   0.005     5.73e-06    .0000312
+precipitation |  -.0635783   .0711852    -0.89   0.373    -.2041297    .0769731
+  temperature |   .0045707    .008665     0.53   0.599    -.0125378    .0216792
+ typhoid_rate |   2.263266   .9866032     2.29   0.023     .3152718    4.211261
+        _cons |  -.0272118   .4052583    -0.07   0.947    -.8273722    .7729486
+-------------------------------------------------------------------------------
+
+. outreg2 using Table3.xls, replace
+Table3.xls
+dir : seeout
+
+. // column 2 - lead only and pH<=7.3
+. regress lead lnhardness population precipitation temperature typhoid_rate if ph<=7.
+> 3, robust
+
+Linear regression                               Number of obs     =         66
+                                                F(5, 60)          =      14.32
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.2231
+                                                Root MSE          =      .4603
+
+-------------------------------------------------------------------------------
+              |               Robust
+         lead |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+   lnhardness |   .0042633   .0631587     0.07   0.946     -.122073    .1305996
+   population |   .0000873   .0000366     2.39   0.020     .0000141    .0001605
+precipitation |  -.7160115   .2355496    -3.04   0.004    -1.187181   -.2448421
+  temperature |   .0667995   .0120459     5.55   0.000     .0427042    .0908949
+ typhoid_rate |  -4.010298   2.170478    -1.85   0.070    -8.351901    .3313046
+        _cons |  -.0181756   .7063779    -0.03   0.980    -1.431142    1.394791
+-------------------------------------------------------------------------------
+
+. outreg2 using Table3.xls, append
+Table3.xls
+dir : seeout
+
+. 
+. // TABLE 4 - effect of lead and pH on infant mortality
+. // column 1
+. regress infrate i.lead##c.lnph, robust 
+
+Linear regression                               Number of obs     =        172
+                                                F(3, 168)         =      23.60
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.2311
+                                                Root MSE          =     .13387
+
+------------------------------------------------------------------------------
+             |               Robust
+     infrate |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+      1.lead |   .0483104   .0231327     2.09   0.038     .0026421    .0939787
+        lnph |  -.0591696    .020466    -2.89   0.004    -.0995733   -.0187659
+             |
+ lead#c.lnph |
+          1  |  -.0433399   .0242319    -1.79   0.075    -.0911781    .0044982
+             |
+       _cons |   .3942443     .01869    21.09   0.000     .3573468    .4311418
+------------------------------------------------------------------------------
+
+. outreg2 using Table4.xls, replace
+Table4.xls
+dir : seeout
+
+. // column 2
+. regress infrate i.lead##c.lnph foreign_share precipitation temperature mom_rate, ro
+> bust 
+
+Linear regression                               Number of obs     =        172
+                                                F(7, 164)         =      23.13
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.4231
+                                                Root MSE          =     .11737
+
+-------------------------------------------------------------------------------
+              |               Robust
+      infrate |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+       1.lead |   .0479879   .0198384     2.42   0.017     .0088163    .0871594
+         lnph |  -.0261862    .013189    -1.99   0.049    -.0522284    -.000144
+              |
+  lead#c.lnph |
+           1  |  -.0375269   .0160591    -2.34   0.021    -.0692362   -.0058176
+              |
+foreign_share |   .2947344   .1028698     2.87   0.005     .0916145    .4978544
+precipitation |   .1011804   .0189264     5.35   0.000     .0638095    .1385512
+  temperature |   .0057876   .0019147     3.02   0.003      .002007    .0095683
+     mom_rate |  -.2194674   .3127533    -0.70   0.484    -.8370095    .3980748
+        _cons |  -.2605307   .1140822    -2.28   0.024      -.48579   -.0352714
+-------------------------------------------------------------------------------
+
+. outreg2 using Table4.xls, append
+Table4.xls
+dir : seeout
+
+. // column 3
+. regress infrate i.lead##c.lnph typhoid_rate np_tub_rate foreign_share precipitation
+>  temperature mom_rate, robust
+
+Linear regression                               Number of obs     =        172
+                                                F(9, 162)         =      18.91
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.4870
+                                                Root MSE          =     .11135
+
+-------------------------------------------------------------------------------
+              |               Robust
+      infrate |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+       1.lead |   .0439927   .0190688     2.31   0.022     .0063372    .0816483
+         lnph |  -.0245928   .0139724    -1.76   0.080    -.0521844    .0029988
+              |
+  lead#c.lnph |
+           1  |  -.0398295   .0167637    -2.38   0.019     -.072933    -.006726
+              |
+ typhoid_rate |   1.317245   .3538975     3.72   0.000     .6183981    2.016092
+  np_tub_rate |   1.653184   .7481965     2.21   0.029     .1757083    3.130659
+foreign_share |    .364554   .1027034     3.55   0.001      .161744    .5673641
+precipitation |   .0994956   .0192598     5.17   0.000     .0614631    .1375282
+  temperature |   .0043717   .0019435     2.25   0.026     .0005338    .0082096
+     mom_rate |  -.2322101   .2881106    -0.81   0.421    -.8011465    .3367264
+        _cons |  -.2828686   .1169932    -2.42   0.017     -.513897   -.0518403
+-------------------------------------------------------------------------------
+
+. outreg2 using Table4.xls, append
+Table4.xls
+dir : seeout
+
+. // column 4
+. gen ph_6675 = ph - 6.675                // generate pH-6.675
+
+. gen ph73 = (ph>7.3)                     // generate 1(pH > 7.3): =1 if pH>7.3, =0 otherwise
+
+. regress infrate c.ph_6675##i.lead i.lead##i.ph73 typhoid_rate np_tub_rate foreign_share precipitation temperature mom_rate, robust
+
+Linear regression                               Number of obs     =        172
+                                                F(11, 160)        =      13.21
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.4839
+                                                Root MSE          =     .11238
+
+--------------------------------------------------------------------------------
+               |               Robust
+       infrate |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+---------------+----------------------------------------------------------------
+       ph_6675 |  -.0579067   .0517257    -1.12   0.265    -.1600599    .0442464
+        1.lead |    .068015   .0366007     1.86   0.065    -.0042677    .1402978
+               |
+lead#c.ph_6675 |
+            1  |  -.0384111   .0593826    -0.65   0.519    -.1556859    .0788637
+               |
+        1.ph73 |   .0485298   .0863184     0.56   0.575    -.1219405    .2190001
+               |
+     lead#ph73 |
+          1 1  |  -.0199873   .0981738    -0.20   0.839    -.2138708    .1738963
+               |
+  typhoid_rate |   1.312992   .3844527     3.42   0.001     .5537355    2.072248
+   np_tub_rate |   1.796545   .7844794     2.29   0.023     .2472753    3.345814
+ foreign_share |   .3897244   .1070384     3.64   0.000      .178334    .6011148
+ precipitation |   .0829916    .021116     3.93   0.000     .0412895    .1246936
+   temperature |   .0047546   .0019603     2.43   0.016     .0008832     .008626
+      mom_rate |  -.1562664   .2859457    -0.55   0.585    -.7209811    .4084483
+         _cons |  -.2690084   .1167248    -2.30   0.022    -.4995285   -.0384883
+--------------------------------------------------------------------------------
+
+. outreg2 using Table4.xls, append
+Table4.xls
+dir : seeout
+
+. 
+. // TABLE 5 - effect of lead on infant mortality
+. // column 1
+. regress infrate lnph if lead==1, robust
+
+Linear regression                               Number of obs     =        117
+                                                F(1, 115)         =      62.82
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.2896
+                                                Root MSE          =     .12959
+
+------------------------------------------------------------------------------
+             |               Robust
+     infrate |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        lnph |  -.1025095   .0129333    -7.93   0.000    -.1281279   -.0768912
+       _cons |   .4425547   .0135883    32.57   0.000     .4156388    .4694706
+------------------------------------------------------------------------------
+
+. outreg2 using Table5.xls, replace
+Table5.xls
+dir : seeout
+
+. // column 2
+. regress infrate lnph lnhardness if lead==1, robust
+
+Linear regression                               Number of obs     =        117
+                                                F(2, 114)         =      45.34
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.3354
+                                                Root MSE          =     .12589
+
+------------------------------------------------------------------------------
+             |               Robust
+     infrate |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+        lnph |   -.057629   .0193367    -2.98   0.004    -.0959349   -.0193232
+  lnhardness |  -.0445449   .0177109    -2.52   0.013      -.07963   -.0094598
+       _cons |    .623314   .0769306     8.10   0.000      .470915    .7757129
+------------------------------------------------------------------------------
+
+. outreg2 using Table5.xls, append
+Table5.xls
+dir : seeout
+
+. // column 3
+. regress infrate c.hardness##c.ph_6675 c.ph_6675#i.ph73 c.hardness#i.ph73 i.lead#i.ph73 if lead==1, robust
+note: 1.lead#1.ph73 omitted because of collinearity
+
+Linear regression                               Number of obs     =        117
+                                                F(6, 110)         =      14.21
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.3867
+                                                Root MSE          =     .12311
+
+--------------------------------------------------------------------------------------
+                     |               Robust
+             infrate |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+---------------------+----------------------------------------------------------------
+            hardness |  -.0006287   .0002428    -2.59   0.011    -.0011099   -.0001476
+             ph_6675 |  -.1703768   .0652798    -2.61   0.010    -.2997461   -.0410076
+                     |
+c.hardness#c.ph_6675 |   .0003993   .0003344     1.19   0.235    -.0002634     .001062
+                     |
+      ph73#c.ph_6675 |
+                  1  |  -.0309672   .0820511    -0.38   0.707    -.1935733    .1316389
+                     |
+     ph73#c.hardness |
+                  1  |  -.0000292   .0002907    -0.10   0.920    -.0006052    .0005468
+                     |
+           lead#ph73 |
+                1 0  |  -.1042822   .0710042    -1.47   0.145    -.2449959    .0364316
+                1 1  |          0  (omitted)
+                     |
+               _cons |   .6172625   .0640559     9.64   0.000     .4903188    .7442061
+--------------------------------------------------------------------------------------
+
+. outreg2 using Table5.xls, append
+Table5.xls
+dir : seeout
+
+. 
+. log off
+      name:  <unnamed>
+       log:  C:\Users\Percy\OneDrive - Dickinson College\Academic\Soph\ECON298\Burstein-Howe-Pham-298-Replication\Analysis\Analysis.log
+  log type:  text
+ paused on:  30 Apr 2020, 23:09:43
+---------------------------------------------------------------------------------------------------------------------------------------
